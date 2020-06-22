@@ -3,14 +3,14 @@ INCDIR=./include
 OBJDIR=./obj
 
 CC=g++
-CFLAGS=-I$(INCDIR)
+CFLAGS=-std=c++17 -Wall -I$(INCDIR)
 
 LIBS=-lm
 
 _DEPS =
 DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS))
 
-_OBJ = main.o
+_OBJ = main.o deduplicator.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 dedup: $(OBJ)
