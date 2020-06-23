@@ -3,6 +3,16 @@
 
 #include <filesystem>
 
-int enumerate_media(const std::filesystem::path& root_path);
+namespace fs = std::filesystem;
+
+class deduplicator {
+ public:
+  deduplicator(const fs::path& root_path);
+  void find_duplicates() const;
+  void print_duplicates() const;
+
+ private:
+  fs::path root_path;
+};
 
 #endif

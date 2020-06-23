@@ -1,32 +1,35 @@
-#include <iostream>
 #include <filesystem>
+#include <iostream>
 
 #include "deduplicator.h"
 
-int main(int argc, char ** argv){
-	if (argc < 2) {
-		std::cerr << "Usage: dedup <path>" << std::endl;
-		return -1;
-	}
+namespace fs = std::filesystem;
 
-	// Validate path
-	std::filesystem::path root_path = argv[1];
-	std::cout << "Provided root path: " << root_path << std::endl;	
-	if (!root_path.is_absolute()) {
-		std::cout << "Path is not absolute. Converting to absolute path" << std::endl;
-		root_path = std::filesystem::absolute(root_path).lexically_normal();
-		std::cout << "Modified root path: " <<  root_path << std::endl;
-	}
-	if (!std::filesystem::exists(root_path)) {
-		std::cerr << "Path: " << root_path << " does not exist" << std::endl;
-		return -1;
-	}
-	if (!std::filesystem::is_directory(root_path)) {
-		std::cerr << "Path: " << root_path << " is not a directory" << std::endl;
-		return -1;
-	}
+int main(int argc, char** argv) {
+  if (argc < 2) {
+    std::cerr << "Usage: dedup <path>" << std::endl;
+    return -1;
+  }
 
-	enumerate_media(root_path);
+  // Validate path
+  fs::path root_path = argv[1];
+  std::cout << "Provided root path: " << root_path << std::endl;
+  if (!root_path.is_absolute()) {
+    std::cout << "Path is not absolute. Converting to absolute path" << std::endl;
+    root_path = fs::absolute(root_path).lexically_normal();
+    std::cout << "Modified root path: " << root_path << std::endl;
+  }
+  if (!fs::exists(root_path)) {
+    std::cerr << "Path: " << root_path << " does not exist" << std::endl;
+    return -1;
+  }
+  if (!fs::is_directory(root_path)) {
+    std::cerr << "Path: " << root_path << " is not a directory" << std::endl;
+    return -1;
+  }
 
-	return 0;
+  deduplicator dedup(root_path);
+  dedup.find_duplicates();
+
+  return 0;
 }

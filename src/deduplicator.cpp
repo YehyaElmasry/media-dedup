@@ -1,8 +1,22 @@
+#include "deduplicator.h"
+
 #include <iostream>
 
-#include "deduplicator.h" 
+deduplicator::deduplicator(const fs::path& root_path) {
+  this->root_path = root_path;
+  return;
+}
 
-int enumerate_media(const std::filesystem::path& root_path) {
-    std::cout << "Beginning media enumeration" << std::endl;
-    return 0;
+void deduplicator::find_duplicates() const {
+  std::cout << "Beginning media enumeration" << std::endl;
+
+  for (auto& p : fs::recursive_directory_iterator(root_path)) {
+    std::cout << p.path() << std::endl;
+  }
+
+  return;
+}
+
+void deduplicator::print_duplicates() const {
+  return;
 }
