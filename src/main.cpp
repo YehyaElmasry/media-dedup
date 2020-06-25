@@ -29,7 +29,8 @@ int main(int argc, char** argv) {
   }
 
   deduplicator dedup(root_path);
-  dedup.find_duplicates();
+  dedup.find_media();
+  dedup.print_media();
 
   return 0;
 }
