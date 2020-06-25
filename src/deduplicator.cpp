@@ -77,7 +77,7 @@ void deduplicator::find_duplicates() {
 
     std::optional<std::string> hash = hash_file(file_path);
     if (!hash.has_value() || hash.value().empty()) {
-      std::cerr << "Failed to hash media file at " << file_path << std::endl;
+      std::cerr << "Error: Failed to hash media file at " << file_path << std::endl;
     } else {
       this->media_hashes[hash.value()].push_back(i);
 

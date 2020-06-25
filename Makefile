@@ -10,7 +10,7 @@ LIBS=-lm
 _DEPS =
 DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS))
 
-_OBJ = main.o deduplicator.o
+_OBJ = main.o deduplicator.o hasher.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 dedup: $(OBJ)
