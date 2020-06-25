@@ -2,6 +2,7 @@
 #define DEDUPLICATOR_H
 
 #include <filesystem>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -20,6 +21,8 @@ class deduplicator {
  private:
   fs::path root_path;
   std::vector<fs::path> media_paths;
+  std::unordered_map<std::string, std::vector<uint64_t>> media_hashes;
+  std::vector<std::string> duplicated_hashes;
 
   const std::unordered_set<std::string> supported_media_extensions = {".jpg", ".jpeg", ".png"};
 };

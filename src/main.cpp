@@ -31,6 +31,8 @@ int main(int argc, char** argv) {
   deduplicator dedup(root_path);
   dedup.find_media();
   dedup.print_media();
+  dedup.find_duplicates();
+  dedup.print_duplicates();
 
   return 0;
 }
