@@ -1,11 +1,10 @@
 #include "deduplicator.h"
 
 #include <algorithm>
+#include <cassert>  // #define NDEBUG // uncomment to disable assert()
 #include <iostream>
 #include <queue>
 #include <unordered_map>
-// #define NDEBUG // uncomment to disable assert()
-#include <cassert>
 
 #include "hasher.h"
 
@@ -79,10 +78,11 @@ void deduplicator::find_duplicates() {
     if (!hash.has_value() || hash.value().empty()) {
       std::cerr << "Error: Failed to hash media file at " << file_path << std::endl;
     } else {
+      std::cout << "Hash: " << hash.value() << std::endl;
       this->media_hashes[hash.value()].push_back(i);
 
       switch (this->media_hashes[hash.value()].size()) {
-        case 1: {
+        case 1: { // File was not seen before
           break;
         }
         case 2: {  // First duplicate is found mark file as duplicated
@@ -90,7 +90,7 @@ void deduplicator::find_duplicates() {
           num_duplicates_found++;
           break;
         }
-        default: { // Another duplicate is found
+        default: {  // Another duplicate is found
           num_duplicates_found++;
           break;
         }

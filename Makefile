@@ -5,7 +5,7 @@ OBJDIR=./obj
 CC=g++
 CFLAGS=-std=c++17 -Wall -I$(INCDIR)
 
-LIBS=-lm
+LIBS=-lm -lcrypto -lssl
 
 _DEPS =
 DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS))
