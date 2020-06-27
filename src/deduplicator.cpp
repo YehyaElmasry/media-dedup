@@ -10,11 +10,12 @@
 
 deduplicator::deduplicator(const fs::path& root_path) {
   this->root_path = root_path;
+  num_media_files = 0;
   return;
 }
 
 void deduplicator::find_media() {
-  std::cout << "Recursively searching for media" << std::endl;
+  std::cout << "Recursively searching for media in" << this->root_path << std::endl;
 
   std::unordered_map<std::string, uint64_t> media_extensions;
 
@@ -49,9 +50,17 @@ void deduplicator::find_media() {
     paths_queue.pop();
   }
 
+  uint64_t num_media_files = 0;
   for (const auto& media_extension : media_extensions) {
-    std::cout << "Found " << media_extension.second << " " << media_extension.first << " files" << std::endl;
+    num_media_files += media_extension.second;
   }
+  this->num_media_files = num_media_files;
+
+  std::cout << "Found " << this->num_media_files << " media files in " << this->root_path << " with the following breakdown:" << std::endl;
+
+  for (const auto& media_extension : media_extensions) {
+    std::cout << "\t- " << media_extension.second << " " << media_extension.first << " files" << std::endl;
+  }  
 
   return;
 }
@@ -70,15 +79,21 @@ void deduplicator::find_duplicates() {
   std::cout << "Recursively searching for media duplicates in " << root_path << std::endl;
 
   uint64_t num_duplicates_found = 0;
-  uint64_t num_media_files = this->media_paths.size();
-  for (uint64_t i = 0; i < num_media_files; ++i) {
+  assert(this->num_media_files == this->media_paths.size());
+  uint64_t progress_step = this->num_media_files / 100;
+
+  for (uint64_t i = 0; i < this->num_media_files; ++i) {
+    if (i % progress_step == 0) {
+      uint64_t progress = i / progress_step;
+      std::cout << progress << "% done" << std::endl;
+    }
     const fs::path& file_path = this->media_paths[i];
 
     std::optional<std::string> hash = hash_file(file_path);
     if (!hash.has_value() || hash.value().empty()) {
       std::cerr << "Error: Failed to hash media file at " << file_path << std::endl;
     } else {
-      std::cout << "Hash: " << hash.value() << std::endl;
+      // std::cout << "Hash: " << hash.value() << std::endl;
       this->media_hashes[hash.value()].push_back(i);
 
       switch (this->media_hashes[hash.value()].size()) {
@@ -97,6 +112,7 @@ void deduplicator::find_duplicates() {
       }
     }
   }
+  std::cout << "Found " << num_duplicates_found << " duplicated media files" << std::endl;
 }
 
 void deduplicator::print_duplicates() const {

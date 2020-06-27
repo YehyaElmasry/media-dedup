@@ -17,11 +17,11 @@ std::optional<std::string> hash_file(const fs::path& file_path) {
     return std::nullopt;
   }
 
-  std::cout << "Hashing " << file_path << std::endl;
+  // std::cout << "Hashing " << file_path << std::endl;
   EVP_MD_CTX* context = EVP_MD_CTX_new();
   if (context != NULL) {
-    if (EVP_DigestInit_ex(context, EVP_sha256(), NULL)) {
-      const int BUFFER_LENGTH = 1024;
+    if (EVP_DigestInit_ex(context, EVP_sha512(), NULL)) {
+      const int BUFFER_LENGTH = 16384;
       std::byte buffer[BUFFER_LENGTH];
       bool more_to_read = true;
       int bytes_read = BUFFER_LENGTH;

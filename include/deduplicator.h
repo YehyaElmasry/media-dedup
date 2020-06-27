@@ -21,6 +21,7 @@ class deduplicator {
  private:
   fs::path root_path;
   std::vector<fs::path> media_paths;
+  uint64_t num_media_files;
   std::unordered_map<std::string, std::vector<uint64_t>> media_hashes;
   std::vector<std::string> duplicated_hashes;
 
