@@ -83,7 +83,7 @@ void deduplicator::find_duplicates() {
   uint64_t progress_step = this->num_media_files / 100;
 
   for (uint64_t i = 0; i < this->num_media_files; ++i) {
-    if (i % progress_step == 0) {
+    if (progress_step > 0 && i % progress_step == 0) {
       uint64_t progress = i / progress_step;
       std::cout << progress << "% done" << std::endl;
     }
