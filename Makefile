@@ -10,7 +10,7 @@ LIBS=-lm -lcrypto -lssl
 _DEPS =
 DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS))
 
-_OBJ = main.o deduplicator.o hasher.o
+_OBJ = main.o deduplicator.o hasher.o cli.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 dedup: $(OBJ)

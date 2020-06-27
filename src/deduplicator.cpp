@@ -8,24 +8,41 @@
 
 #include "hasher.h"
 
-deduplicator::deduplicator(const fs::path& root_path) {
-  this->root_path = root_path;
+deduplicator::deduplicator(const fs::path& media_root_path, const fs::path& trash_root_path, const bool print_media,
+                           const bool print_duplicates, const bool dedup_without_confirmation) {
+  this->media_root_path = media_root_path;
+  this->trash_root_path = trash_root_path;
+  this->should_print_media = print_media;
+  this->should_print_duplicates = print_duplicates;
+  this->dedup_without_confirmation = dedup_without_confirmation;
   num_media_files = 0;
-  return;
+}
+
+bool deduplicator::run() {
+  find_media();
+  if (this->should_print_media) {
+    print_media();
+  }
+
+  find_duplicates();
+  if (this->should_print_duplicates) {
+    print_duplicates();
+  }
+
+  return true;
 }
 
 void deduplicator::find_media() {
-  std::cout << "Recursively searching for media in" << this->root_path << std::endl;
+  std::cout << "Recursively searching for media in " << this->media_root_path << std::endl;
 
   std::unordered_map<std::string, uint64_t> media_extensions;
+  uint64_t num_media_files = 0;
 
   std::queue<fs::path> paths_queue;
-
-  paths_queue.push(root_path);
-
+  paths_queue.push(media_root_path);
   while (!paths_queue.empty()) {
     const fs::path& curr_path = paths_queue.front();
-    std::cout << "Entering directory: " << curr_path << std::endl;
+    std::cout << "Searching directory: " << curr_path << std::endl;
 
     for (const auto& p : fs::directory_iterator(curr_path)) {
       if (fs::is_directory(p.path())) {
@@ -38,6 +55,7 @@ void deduplicator::find_media() {
 
         if (this->supported_media_extensions.count(file_extension) > 0) {
           this->media_paths.push_back(p.path());
+          num_media_files++;
 
           if (media_extensions.count(file_extension) == 0) {
             media_extensions[file_extension] = 0;
@@ -50,33 +68,27 @@ void deduplicator::find_media() {
     paths_queue.pop();
   }
 
-  uint64_t num_media_files = 0;
-  for (const auto& media_extension : media_extensions) {
-    num_media_files += media_extension.second;
-  }
   this->num_media_files = num_media_files;
-
-  std::cout << "Found " << this->num_media_files << " media files in " << this->root_path << " with the following breakdown:" << std::endl;
+  std::cout << "Found " << this->num_media_files << " media files in " << this->media_root_path
+            << " with the following breakdown:" << std::endl;
 
   for (const auto& media_extension : media_extensions) {
     std::cout << "\t- " << media_extension.second << " " << media_extension.first << " files" << std::endl;
-  }  
-
-  return;
+  }
+  std::cout << "\n";
 }
 
 void deduplicator::print_media() const {
-  std::cout << "Printing media files found recrusively in " << root_path << std::endl;
+  std::cout << "Printing media files found recrusively in " << this->media_root_path << std::endl;
 
   for (const auto& path : this->media_paths) {
     std::cout << path << std::endl;
   }
-
-  return;
+  std::cout << "\n";
 }
 
 void deduplicator::find_duplicates() {
-  std::cout << "Recursively searching for media duplicates in " << root_path << std::endl;
+  std::cout << "Recursively searching for media duplicates in " << this->media_root_path << std::endl;
 
   uint64_t num_duplicates_found = 0;
   assert(this->num_media_files == this->media_paths.size());
@@ -97,7 +109,7 @@ void deduplicator::find_duplicates() {
       this->media_hashes[hash.value()].push_back(i);
 
       switch (this->media_hashes[hash.value()].size()) {
-        case 1: { // File was not seen before
+        case 1: {  // File was not seen before
           break;
         }
         case 2: {  // First duplicate is found mark file as duplicated
@@ -113,10 +125,11 @@ void deduplicator::find_duplicates() {
     }
   }
   std::cout << "Found " << num_duplicates_found << " duplicated media files" << std::endl;
+  std::cout << "\n";
 }
 
 void deduplicator::print_duplicates() const {
-  std::cout << "Printing duplicated media files found recrusively in " << root_path << std::endl;
+  std::cout << "Printing duplicated media files found recrusively in " << this->media_root_path << std::endl;
 
   for (const std::string& duplicated_hash : duplicated_hashes) {
     const auto& duplicates_paths_idxs = this->media_hashes.at(duplicated_hash);
@@ -127,4 +140,5 @@ void deduplicator::print_duplicates() const {
       std::cout << "\t " << this->media_paths[duplicates_paths_idxs[i]] << std::endl;
     }
   }
+  std::cout << "\n";
 }

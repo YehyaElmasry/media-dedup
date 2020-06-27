@@ -1,38 +1,20 @@
-#include <filesystem>
-#include <iostream>
-
+#include "cli.h"
 #include "deduplicator.h"
 
-namespace fs = std::filesystem;
-
 int main(int argc, char** argv) {
-  if (argc < 2) {
-    std::cerr << "Usage: dedup <path>" << std::endl;
-    return -1;
-  }
+  std::optional<cmd_args_t> parsing_output = parse_cmd_args(argc, argv);
+  if (parsing_output.has_value()) {
+    const cmd_args_t& parsed_args = parsing_output.value();
 
-  // Validate path
-  fs::path root_path = argv[1];
-  std::cout << "Provided root path: " << root_path << std::endl;
-  if (!root_path.is_absolute()) {
-    std::cout << "Path is not absolute. Converting to absolute path" << std::endl;
-    root_path = fs::absolute(root_path).lexically_normal();
-    std::cout << "Modified root path: " << root_path << std::endl;
+    deduplicator dedup(parsed_args.media_path, parsed_args.trash_path, parsed_args.print_media,
+                       parsed_args.print_duplicates, parsed_args.no_confirmation);
+    if (dedup.run()){
+      return EXIT_SUCCESS;
+    } else {
+      return EXIT_FAILURE;
+    }
+  } else {
+    print_help_message();
+    return EXIT_FAILURE;
   }
-  if (!fs::exists(root_path)) {
-    std::cerr << "Path: " << root_path << " does not exist" << std::endl;
-    return -1;
-  }
-  if (!fs::is_directory(root_path)) {
-    std::cerr << "Path: " << root_path << " is not a directory" << std::endl;
-    return -1;
-  }
-
-  deduplicator dedup(root_path);
-  dedup.find_media();
-  //dedup.print_media();
-  dedup.find_duplicates();
-  dedup.print_duplicates();
-
-  return 0;
 }
