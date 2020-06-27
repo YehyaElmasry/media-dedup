@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "cli.h"
 #include "deduplicator.h"
 
@@ -11,6 +13,7 @@ int main(int argc, char** argv) {
     if (dedup.run()) {
       return EXIT_SUCCESS;
     } else {
+      std::cerr << "Error: Failed to deduplicate media files adequately" << std::endl;
       return EXIT_FAILURE;
     }
   } else {

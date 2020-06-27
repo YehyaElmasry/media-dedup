@@ -16,10 +16,10 @@ class deduplicator {
   bool run();
 
  private:
-  void find_media();
-  void print_media() const;
-  void find_duplicates();
-  void print_duplicates() const;
+  bool find_media();
+  bool print_media() const;
+  bool find_duplicates();
+  bool print_duplicates() const;
 
   std::vector<fs::path> media_paths;
   std::uintmax_t num_media_files;

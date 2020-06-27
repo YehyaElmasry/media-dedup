@@ -1,7 +1,6 @@
 #include "deduplicator.h"
 
 #include <algorithm>
-#include <cassert>  // #define NDEBUG // uncomment to disable assert()
 #include <cmath>
 #include <iostream>
 #include <queue>
@@ -21,20 +20,32 @@ deduplicator::deduplicator(const fs::path& media_root_path, const fs::path& tras
 }
 
 bool deduplicator::run() {
-  find_media();
+  if (!find_media()) {
+    std::cerr << "Error: Failed to find all media files in " << this->media_root_path << std::endl;
+    return false;
+  }
   if (this->should_print_media) {
-    print_media();
+    if (!print_media()) {
+      std::cerr << "Error: Failed to print media files in " << this->media_root_path << std::endl;
+      return false;
+    }
   }
 
-  find_duplicates();
+  if (!find_duplicates()) {
+    std::cerr << "Error: Failed to find all media duplicates in " << this->media_root_path << std::endl;
+    return false;
+  }
   if (this->should_print_duplicates) {
-    print_duplicates();
+    if (!print_duplicates()) {
+      std::cerr << "Error: Failed to print media duplicates in " << this->media_root_path << std::endl;
+      return false;
+    }
   }
 
   return true;
 }
 
-void deduplicator::find_media() {
+bool deduplicator::find_media() {
   std::cout << "Recursively searching for media in " << this->media_root_path << std::endl;
 
   std::unordered_map<std::string, std::uintmax_t> media_extensions;
@@ -77,22 +88,27 @@ void deduplicator::find_media() {
     std::cout << "\t- " << media_extension.second << " " << media_extension.first << " files" << std::endl;
   }
   std::cout << "\n";
+  return true;
 }
 
-void deduplicator::print_media() const {
+bool deduplicator::print_media() const {
   std::cout << "Printing media files found recrusively in " << this->media_root_path << std::endl;
 
   for (const auto& path : this->media_paths) {
     std::cout << path << std::endl;
   }
   std::cout << "\n";
+  return true;
 }
 
-void deduplicator::find_duplicates() {
+bool deduplicator::find_duplicates() {
   std::cout << "Recursively searching for media duplicates in " << this->media_root_path << std::endl;
 
   std::uintmax_t num_duplicates_found = 0;
-  assert(this->num_media_files == this->media_paths.size());
+  if (this->num_media_files != this->media_paths.size()) {
+    std::cerr << "Error: Number of media files found does not match the expected value" << std::endl;
+    return false;
+  }
 
   const int TOTAL_STEPS = 100;
   double progress_step = static_cast<double>(this->size_media_files) / TOTAL_STEPS;
@@ -133,19 +149,24 @@ void deduplicator::find_duplicates() {
   }
   std::cout << "Found " << num_duplicates_found << " duplicated media files" << std::endl;
   std::cout << "\n";
+  return true;
 }
 
-void deduplicator::print_duplicates() const {
+bool deduplicator::print_duplicates() const {
   std::cout << "Printing duplicated media files found recrusively in " << this->media_root_path << std::endl;
 
   for (const std::string& duplicated_hash : duplicated_hashes) {
     const auto& duplicates_paths_idxs = this->media_hashes.at(duplicated_hash);
-    assert(duplicates_paths_idxs.size() >= 2);
+    if (!(duplicates_paths_idxs.size() >= 2)) {
+      std::cerr << "Error: Unexpected duplicated hash. File does not have a duplicate" << std::endl;
+      return false;
+    }
 
     std::cout << "Duplicate for " << this->media_paths[duplicates_paths_idxs[0]] << " found at:" << std::endl;
     for (std::uintmax_t i = 1; i < duplicates_paths_idxs.size(); ++i) {
-      std::cout << "\t " << this->media_paths[duplicates_paths_idxs[i]] << std::endl;
+      std::cout << "\t " << this->media_paths[duplicates_paths_idxs[i]] << "\n" << std::endl;
     }
   }
   std::cout << "\n";
+  return true;
 }
