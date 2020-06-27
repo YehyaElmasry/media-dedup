@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
 
     deduplicator dedup(parsed_args.media_path, parsed_args.trash_path, parsed_args.print_media,
                        parsed_args.print_duplicates, parsed_args.no_confirmation);
-    if (dedup.run()){
+    if (dedup.run()) {
       return EXIT_SUCCESS;
     } else {
       return EXIT_FAILURE;

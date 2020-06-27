@@ -22,8 +22,9 @@ class deduplicator {
   void print_duplicates() const;
 
   std::vector<fs::path> media_paths;
-  uint64_t num_media_files;
-  std::unordered_map<std::string, std::vector<uint64_t>> media_hashes;
+  std::uintmax_t num_media_files;
+  std::uintmax_t size_media_files;
+  std::unordered_map<std::string, std::vector<std::uintmax_t>> media_hashes;
   std::vector<std::string> duplicated_hashes;
 
   fs::path media_root_path = "";
@@ -32,7 +33,7 @@ class deduplicator {
   bool should_print_duplicates = false;
   bool dedup_without_confirmation = false;
 
-  const std::unordered_set<std::string> supported_media_extensions = {".jpg", ".jpeg", ".png"};
+  const std::unordered_set<std::string> supported_media_extensions = {".jpg", ".jpeg", ".png", ".mov"};
 };
 
 #endif
