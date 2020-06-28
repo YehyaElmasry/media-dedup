@@ -17,6 +17,7 @@ deduplicator::deduplicator(const fs::path& media_root_path, const fs::path& tras
   this->dedup_without_confirmation = dedup_without_confirmation;
   this->num_media_files = 0;
   this->size_media_files = 0;
+  this->num_media_duplicates = 0;
 }
 
 bool deduplicator::run() {
@@ -91,8 +92,8 @@ bool deduplicator::find_media() {
     paths_queue.pop();
   }
 
-  std::cout << "Found " << this->num_media_files << " (" << (static_cast<double>(size_media_files) / 1e6) << " MB)"
-            << " media files in " << this->media_root_path << " with the following breakdown:" << std::endl;
+  std::cout << "Found " << this->num_media_files << " (" << (static_cast<double>(size_media_files) / 1e6)
+            << " MB) media files in " << this->media_root_path << " with the following breakdown:" << std::endl;
 
   for (const auto& media_extension : media_extensions) {
     std::cout << "\t- " << media_extension.second << " " << media_extension.first << " files" << std::endl;
@@ -114,7 +115,6 @@ bool deduplicator::print_media() const {
 bool deduplicator::find_duplicates() {
   std::cout << "Recursively searching for media duplicates in " << this->media_root_path << std::endl;
 
-  std::uintmax_t num_duplicates_found = 0;
   if (this->num_media_files != this->media_paths.size()) {
     std::cerr << "Error: Number of media files found does not match the expected value" << std::endl;
     return false;
@@ -125,6 +125,7 @@ bool deduplicator::find_duplicates() {
   double next_progress_step = progress_step;
   int current_step = 0;
   std::uintmax_t size_so_far = 0;
+  std::uintmax_t duplicates_size = 0;
   for (std::uintmax_t i = 0; i < this->num_media_files; ++i) {
     if (size_so_far > next_progress_step) {
       current_step++;
@@ -132,7 +133,8 @@ bool deduplicator::find_duplicates() {
       std::cout << current_step << "% done\r" << std::flush;
     }
     const fs::path& file_path = this->media_paths[i];
-    size_so_far += fs::file_size(file_path);
+    std::uintmax_t file_size = fs::file_size(file_path);
+    size_so_far += file_size;
 
     std::optional<std::string> hash = hash_file(file_path);
     if (!hash.has_value() || hash.value().empty()) {
@@ -147,18 +149,22 @@ bool deduplicator::find_duplicates() {
         }
         case 2: {  // First duplicate is found mark file as duplicated
           this->duplicated_hashes.push_back(hash.value());
-          num_duplicates_found++;
+          this->num_media_duplicates++;
+          duplicates_size += file_size;
           break;
         }
         default: {  // Another duplicate is found
-          num_duplicates_found++;
+          this->num_media_duplicates++;
+          duplicates_size += file_size;
           break;
         }
       }
     }
   }
-  std::cout << "Found " << num_duplicates_found << " duplicated media files" << std::endl;
+  std::cout << "Found " << this->num_media_duplicates << " (" << (static_cast<double>(duplicates_size) / 1e6)
+            << " MB) duplicated media files" << std::endl;
   std::cout << "\n";
+
   return true;
 }
 
@@ -188,17 +194,23 @@ bool deduplicator::print_duplicates() const {
 }
 
 bool deduplicator::remove_duplicates() const {
-  bool cut_to_trash = false;
+  if (this->num_media_duplicates == 0) {
+    std::cout << "No duplicates were found. Nothing to remove" << std::endl;
+    return true;
+  }
+
+  bool copy_to_trash = false;
 
   if (this->trash_root_path.empty()) {
     std::cout << "No trash path is provided. All media duplicates at " << this->media_root_path
               << " will be deleted permanently\n";
     if (!this->dedup_without_confirmation) {
-      std::cout << "Be careful! You might want to provide a trash path instead. See the help message at dedup --help"
+      std::cout << "Be careful! This cannot be undone. You might want to provide a trash path instead. See the help "
+                   "message at dedup --help"
                 << std::endl;
     }
   } else {
-    cut_to_trash = true;
+    copy_to_trash = true;
     std::cout << "Duplicated media files will be moved to the trash path: " << this->trash_root_path << std::endl;
   }
 
@@ -215,6 +227,8 @@ bool deduplicator::remove_duplicates() const {
     if (confirmation == "no") {
       return false;
     }
+
+    std::cout << "\n";
   }
 
   for (const std::string& duplicated_hash : duplicated_hashes) {
@@ -233,14 +247,24 @@ bool deduplicator::remove_duplicates() const {
     for (std::uintmax_t i = 1; i < duplicates_paths_idxs.size(); ++i) {
       fs::path victim_path = this->media_paths[duplicates_paths_idxs[i]];
 
-      if (cut_to_trash) {  // Move to trash path
-
-      } else {  // Permanently delete
-        std::cout << "Deleting " << victim_path << std::endl;
-        if (!fs::remove(victim_path)) {
-          std::cerr << "Error: Failed to delete " << victim_path << std::endl;
-          return false;
+      if (copy_to_trash) {  // Copy to trash path before deletion
+        fs::path copy_target_path = this->trash_root_path / fs::relative(victim_path, this->media_root_path);
+        std::cout << "Copying " << victim_path << " to " << copy_target_path << std::endl;
+        fs::create_directories(copy_target_path.parent_path());
+        if (!fs::exists(copy_target_path.parent_path())) {
+          std::cerr << "Error: Failed to create directory: " << copy_target_path.parent_path() << std::endl;
+        } else {
+          if (!fs::copy_file(victim_path, copy_target_path)) {
+            std::cerr << "Error: Failed to copy " << victim_path << " to " << copy_target_path << std::endl;
+          }
         }
+      }
+
+      // Permanently delete
+      std::cout << "Deleting " << victim_path << std::endl;
+      if (!fs::remove(victim_path)) {
+        std::cerr << "Error: Failed to delete " << victim_path << std::endl;
+        return false;
       }
     }
     std::cout << "\n";

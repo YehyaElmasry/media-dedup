@@ -6,13 +6,14 @@
 
 std::string HELP_MENU =
     "Usage: dedup --media-path <path> [optional_flags]\n"
-    "Example: dedup --media-path /path/to/media/ --trash-path /path/to/duplicates/trash/\n\n"
+    "Example: dedup --media-path /path/to/media/ --trash-path /path/to/duplicates/trash/ --print-duplicates\n\n"
     "--media-path <path>\tPath of the directory in which the media files will be deduplicated\n"
     "--trash-path <path>\tPath of the directory to which the duplicates will be moved. If not provided\n"
     "                   \tduplicates will be deleted permanently. It is recommended to use this option\n"
     "--print-media      \tPrint paths of media files found\n"
     "--print-duplicates \tPrint paths of duplicates found\n"
-    "--no-confirmation  \tNo confirmation before deleting duplicates or moving to provided trash path\n"
+    "--no-confirmation  \tNo confirmation before deleting duplicates or moving them trash path (if provided).\n"
+    "                   \tBe very careful with this flag especially if no trash path is provided.\n"
     "--help             \tPrint this help message";
 
 bool is_cmd_arg_valid_path(char* arg) {
