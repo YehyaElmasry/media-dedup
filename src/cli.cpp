@@ -44,6 +44,7 @@ std::optional<cmd_args_t> parse_cmd_args(int argc, char** argv) {
     if (!strcmp(argv[i], "--media-path")) {
       if (i < argc - 1 && is_cmd_arg_valid_path(argv[i + 1])) {
         cmd_args.media_path = fs::path(argv[i + 1]);
+        i++;
         if (!cmd_args.media_path.is_absolute()) {
           cmd_args.media_path = fs::absolute(cmd_args.media_path).lexically_normal();
         }
@@ -51,32 +52,26 @@ std::optional<cmd_args_t> parse_cmd_args(int argc, char** argv) {
       } else {
         return std::nullopt;
       }
-    }
-
-    if (!strcmp(argv[i], "--trash-path")) {
+    } else if (!strcmp(argv[i], "--trash-path")) {
       if (i < argc - 1 && is_cmd_arg_valid_path(argv[i + 1])) {
         cmd_args.trash_path = fs::path(argv[i + 1]);
+        i++;
         if (!cmd_args.trash_path.is_absolute()) {
           cmd_args.trash_path = fs::absolute(cmd_args.trash_path).lexically_normal();
         }
       } else {
         return std::nullopt;
       }
-    }
-
-    if (!strcmp(argv[i], "--print-media")) {
+    } else if (!strcmp(argv[i], "--print-media")) {
       cmd_args.print_media = true;
-    }
-
-    if (!strcmp(argv[i], "--print-duplicates")) {
+    } else if (!strcmp(argv[i], "--print-duplicates")) {
       cmd_args.print_duplicates = true;
-    }
-
-    if (!strcmp(argv[i], "--no-confirmation")) {
+    } else if (!strcmp(argv[i], "--no-confirmation")) {
       cmd_args.no_confirmation = true;
-    }
-
-    if (!strcmp(argv[i], "--help")) {
+    } else if (!strcmp(argv[i], "--help")) {
+      return std::nullopt;
+    } else {
+      std::cerr << "Unknown flag \"" << argv[i] << "\"" << std::endl;
       return std::nullopt;
     }
   }
