@@ -155,6 +155,7 @@ bool deduplicator::find_duplicates() {
   int current_step = 0;
   std::uintmax_t size_so_far = 0;
   std::uintmax_t duplicates_size = 0;
+  std::cout << current_step << "% done\r" << std::flush;
   for (std::uintmax_t i = 0; i < this->num_media_files; ++i) {
     if (size_so_far > next_progress_step) {
       current_step++;
