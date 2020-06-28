@@ -42,6 +42,16 @@ bool deduplicator::run() {
     }
   }
 
+  if (!remove_duplicates()) {
+    if (this->trash_root_path.empty()) {
+      std::cerr << "Error: Failed to delete all media duplicates in " << this->media_root_path << std::endl;
+    } else {
+      std::cerr << "Error: Failed to move all media duplicates in " << this->media_root_path << " to "
+                << this->trash_root_path << std::endl;
+    }
+    return false;
+  }
+
   return true;
 }
 
@@ -158,15 +168,83 @@ bool deduplicator::print_duplicates() const {
   for (const std::string& duplicated_hash : duplicated_hashes) {
     const auto& duplicates_paths_idxs = this->media_hashes.at(duplicated_hash);
     if (!(duplicates_paths_idxs.size() >= 2)) {
-      std::cerr << "Error: Unexpected duplicated hash. File does not have a duplicate" << std::endl;
+      if (duplicates_paths_idxs.size() == 1) {
+        std::cerr << "Error: Unexpected duplicated hash. File " << this->media_paths[duplicates_paths_idxs[0]]
+                  << " does not have a duplicate" << std::endl;
+      } else {
+        std::cerr << "Error: Unexpected duplicated hash. File with this hash was not seen before" << std::endl;
+      }
       return false;
     }
 
     std::cout << "Duplicate for " << this->media_paths[duplicates_paths_idxs[0]] << " found at:" << std::endl;
     for (std::uintmax_t i = 1; i < duplicates_paths_idxs.size(); ++i) {
-      std::cout << "\t " << this->media_paths[duplicates_paths_idxs[i]] << "\n" << std::endl;
+      std::cout << "\t " << this->media_paths[duplicates_paths_idxs[i]] << std::endl;
     }
+    std::cout << "\n";
   }
   std::cout << "\n";
+  return true;
+}
+
+bool deduplicator::remove_duplicates() const {
+  bool cut_to_trash = false;
+
+  if (this->trash_root_path.empty()) {
+    std::cout << "No trash path is provided. All media duplicates at " << this->media_root_path
+              << " will be deleted permanently\n";
+    if (!this->dedup_without_confirmation) {
+      std::cout << "Be careful! You might want to provide a trash path instead. See the help message at dedup --help"
+                << std::endl;
+    }
+  } else {
+    cut_to_trash = true;
+    std::cout << "Duplicated media files will be moved to the trash path: " << this->trash_root_path << std::endl;
+  }
+
+  if (!this->dedup_without_confirmation) {
+    std::string confirmation = "";
+    do {
+      if (!confirmation.empty()) {
+        std::cout << "Please answer with \"yes\" or \"no\"" << std::endl;
+      }
+      std::cout << "Are you sure you want to proceed? [yes/no]\t" << std::flush;
+      std::cin >> confirmation;
+    } while (confirmation != "yes" && confirmation != "no");
+
+    if (confirmation == "no") {
+      return false;
+    }
+  }
+
+  for (const std::string& duplicated_hash : duplicated_hashes) {
+    const auto& duplicates_paths_idxs = this->media_hashes.at(duplicated_hash);
+    if (!(duplicates_paths_idxs.size() >= 2)) {
+      if (duplicates_paths_idxs.size() == 1) {
+        std::cerr << "Error: Unexpected duplicated hash. File " << this->media_paths[duplicates_paths_idxs[0]]
+                  << " does not have a duplicate" << std::endl;
+      } else {
+        std::cerr << "Error: Unexpected duplicated hash. File with this hash was not seen before" << std::endl;
+      }
+
+      return false;
+    }
+
+    for (std::uintmax_t i = 1; i < duplicates_paths_idxs.size(); ++i) {
+      fs::path victim_path = this->media_paths[duplicates_paths_idxs[i]];
+
+      if (cut_to_trash) {  // Move to trash path
+
+      } else {  // Permanently delete
+        std::cout << "Deleting " << victim_path << std::endl;
+        if (!fs::remove(victim_path)) {
+          std::cerr << "Error: Failed to delete " << victim_path << std::endl;
+          return false;
+        }
+      }
+    }
+    std::cout << "\n";
+  }
+
   return true;
 }
