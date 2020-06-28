@@ -10,6 +10,10 @@ int main(int argc, char** argv) {
 
     deduplicator dedup(parsed_args.media_path, parsed_args.trash_path, parsed_args.print_media,
                        parsed_args.print_duplicates, parsed_args.no_confirmation);
+    if (!dedup.init(fs::path("./accepted_extensions.config"))) {
+      std::cerr << "Error: Failed to initialize deduplication class" << std::endl;
+      return EXIT_FAILURE;
+    }
     if (dedup.run()) {
       return EXIT_SUCCESS;
     } else {

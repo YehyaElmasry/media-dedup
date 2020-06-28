@@ -13,6 +13,7 @@ class deduplicator {
   deduplicator(const fs::path& media_root_path, const fs::path& trash_root_path, const bool print_media,
                const bool print_duplicates, const bool dedup_without_confirmation);
 
+  bool init(fs::path config_file_path);
   bool run();
 
  private:
@@ -35,7 +36,7 @@ class deduplicator {
   bool should_print_duplicates = false;
   bool dedup_without_confirmation = false;
 
-  const std::unordered_set<std::string> supported_media_extensions = {".jpg", ".jpeg", ".png", ".mov"};
+  std::unordered_set<std::string> supported_media_extensions;
 };
 
 #endif

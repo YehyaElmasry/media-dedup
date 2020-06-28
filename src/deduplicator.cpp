@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <queue>
 #include <unordered_map>
@@ -18,6 +19,26 @@ deduplicator::deduplicator(const fs::path& media_root_path, const fs::path& tras
   this->num_media_files = 0;
   this->size_media_files = 0;
   this->num_media_duplicates = 0;
+}
+
+bool deduplicator::init(fs::path config_file_path) {
+  std::ifstream config_stream(config_file_path);
+  if (!config_stream.is_open()) {
+    std::cerr << "Error: Failed to open configuration file at " << config_file_path << std::endl;
+    return false;
+  }
+  std::string line;
+  while (std::getline(config_stream, line)) {
+    if (!line.empty() && line[0] == '.') {  // extension
+      if (!this->supported_media_extensions.insert(line).second) {
+        std::cerr << "Error: Could not insert the extension \"" << line << "\" to the set of accepted extensions"
+                  << std::endl;
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 bool deduplicator::run() {
