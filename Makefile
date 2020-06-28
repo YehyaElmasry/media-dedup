@@ -3,7 +3,7 @@ INCDIR=./include
 OBJDIR=./obj
 
 CC=g++
-CFLAGS=-std=c++17 -Wall -I$(INCDIR)
+CFLAGS=-std=c++17 -Wall -I$(INCDIR) -O3
 
 LIBS=-lm -lcrypto -lssl
 

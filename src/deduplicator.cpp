@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <queue>
+#include <set>
 #include <unordered_map>
 
 #include "hasher.h"
@@ -81,6 +82,7 @@ bool deduplicator::find_media() {
   std::cout << "Recursively searching for media in " << this->media_root_path << std::endl;
 
   std::unordered_map<std::string, std::uintmax_t> media_extensions;
+  std::set<fs::path> ordered_media_paths;
 
   std::queue<fs::path> paths_queue;
   paths_queue.push(media_root_path);
@@ -98,7 +100,7 @@ bool deduplicator::find_media() {
                        [](unsigned char c) { return std::tolower(c); });
 
         if (this->supported_media_extensions.count(file_extension) > 0) {
-          this->media_paths.push_back(p.path());
+          ordered_media_paths.insert(p.path());
           this->num_media_files++;
           this->size_media_files += fs::file_size(p.path());
 
@@ -112,6 +114,10 @@ bool deduplicator::find_media() {
 
     paths_queue.pop();
   }
+
+  // Copy from ordered set to vector, preserving alphabetical order of paths
+  this->media_paths.reserve(ordered_media_paths.size());
+  std::copy(ordered_media_paths.begin(), ordered_media_paths.end(), std::back_inserter(this->media_paths));
 
   std::cout << "Found " << this->num_media_files << " (" << (static_cast<double>(size_media_files) / 1e6)
             << " MB) media files in " << this->media_root_path << " with the following breakdown:" << std::endl;
