@@ -27,7 +27,8 @@ class deduplicator {
   std::uintmax_t num_media_files;
   std::uintmax_t size_media_files;
   std::uintmax_t num_media_duplicates;
-  std::unordered_map<std::string, std::vector<std::uintmax_t>> media_hashes;
+  std::unordered_map<std::string, std::vector<std::uintmax_t>>
+      media_hashes;  // Hash -> indices of paths in this->media_paths vector
   std::vector<std::string> duplicated_hashes;
 
   fs::path media_root_path = "";
